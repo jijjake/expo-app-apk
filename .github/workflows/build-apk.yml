@@ -42,34 +42,17 @@ jobs:
           echo "Current directory: $(pwd)"
           echo "Listing files before build:"
           ls -la
-          # Try with expo export
           echo "Running expo export..."
           npx expo export --platform web
           echo "Listing files after expo export:"
           ls -la
-          # Check if web-build exists
-          if [ -d "web-build" ]; then
-            echo "web-build directory exists. Contents:"
-            ls -la web-build/
-            # Check if bundle.js exists
-            if [ ! -f "web-build/bundle.js" ]; then
-              echo "bundle.js not found. Creating a minimal bundle.js..."
-              # Create a more comprehensive bundle.js that loads the app
-              cat > web-build/bundle.js << 'EOF'
-              console.log('Loading Expo app...');
-              // Simple React app that renders the main screen
-              const root = document.getElementById('root');
-              if (root) {
-                root.innerHTML = '<div style="padding: 20px; font-family: Arial, sans-serif;"><h1>Expo App</h1><p>Loading app...</p></div>';
-              }
-              EOF
-              echo "Created web-build/bundle.js"
-            fi
+          echo "Checking dist directory:"
+          if [ -d "dist" ]; then
+            echo "dist directory exists. Contents:"
+            ls -la dist/
           else
-            echo "web-build directory does not exist. Creating empty directory..."
-            mkdir -p web-build
-            echo "<!DOCTYPE html><html><head><title>Expo App</title></head><body><h1>Hello World</h1></body></html>" > web-build/index.html
-            echo "Created web-build/index.html"
+            echo "dist directory does not exist. Build may have failed."
+            exit 1
           fi
       - name: Sync Capacitor
         run: |
@@ -77,14 +60,12 @@ jobs:
           echo "Current directory: $(pwd)"
           echo "Listing files before sync:"
           ls -la
-          if [ -d "web-build" ]; then
-            echo "web-build directory exists. Contents:"
-            ls -la web-build/
+          if [ -d "dist" ]; then
+            echo "dist directory exists. Contents:"
+            ls -la dist/
           else
-            echo "web-build directory does not exist. Creating empty directory..."
-            mkdir -p web-build
-            echo "<!DOCTYPE html><html><head><title>Expo App</title></head><body><h1>Hello World</h1></body></html>" > web-build/index.html
-            echo "Created web-build/index.html"
+            echo "dist directory does not exist. Build may have failed."
+            exit 1
           fi
           npx cap sync
       - name: Build Android
