@@ -23,21 +23,21 @@ jobs:
           npm --version
           node --version
           ls -la
-          npm install --verbose || {
+          npm install || {
             echo "=== npm install failed ==="
             exit 1
           }
       - name: Install Capacitor
         run: |
           echo "=== Installing Capacitor ==="
-          npm install @capacitor/core @capacitor/cli @capacitor/android --verbose || {
+          npm install @capacitor/core @capacitor/cli @capacitor/android || {
             echo "=== npm install Capacitor failed ==="
             exit 1
           }
       - name: Sync Capacitor
         run: |
           echo "=== Syncing Capacitor ==="
-          npx cap sync --verbose || {
+          npx cap sync || {
             echo "=== cap sync failed ==="
             exit 1
           }
