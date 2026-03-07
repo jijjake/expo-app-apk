@@ -241,6 +241,11 @@ export const createStyles = (theme: typeof Colors.light) =>
     textInput: {
       color: theme.textPrimary,
     },
+    textArea: {
+      minHeight: 88,
+      paddingTop: Spacing.sm,
+      textAlignVertical: 'top',
+    },
     projectSelector: {
       flexDirection: 'row',
       flexWrap: 'wrap',

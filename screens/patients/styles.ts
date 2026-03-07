@@ -25,6 +25,28 @@ export const createStyles = (theme: typeof Colors.light) =>
       alignItems: 'center',
       backgroundColor: theme.backgroundTertiary,
     },
+    searchContainer: {
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm,
+      backgroundColor: theme.backgroundDefault,
+    },
+    searchInputWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.backgroundRoot,
+      borderRadius: BorderRadius.lg,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm,
+      borderWidth: 1,
+      borderColor: theme.border,
+      gap: Spacing.sm,
+    },
+    searchInput: {
+      flex: 1,
+      fontSize: 15,
+      color: theme.textPrimary,
+      paddingVertical: Spacing.xs,
+    },
     patientList: {
       flex: 1,
       paddingHorizontal: Spacing.md,
@@ -90,6 +112,14 @@ export const createStyles = (theme: typeof Colors.light) =>
       alignItems: 'center',
       backgroundColor: theme.backgroundRoot,
     },
+    deleteButton: {
+      width: 32,
+      height: 32,
+      borderRadius: BorderRadius.sm,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    },
     modalOverlay: {
       flex: 1,
       backgroundColor: 'rgba(0, 0, 0, 0.6)',
@@ -99,12 +129,10 @@ export const createStyles = (theme: typeof Colors.light) =>
       backgroundColor: theme.backgroundDefault,
       borderTopLeftRadius: BorderRadius.xl,
       borderTopRightRadius: BorderRadius.xl,
-      paddingHorizontal: Spacing.lg,
-      paddingVertical: Spacing.lg,
     },
     modalBody: {
-      backgroundColor: theme.backgroundDefault,
-      borderRadius: BorderRadius.lg,
+      paddingHorizontal: Spacing.lg,
+      paddingVertical: Spacing.lg,
       gap: Spacing.lg,
     },
     modalHeader: {
@@ -137,8 +165,7 @@ export const createStyles = (theme: typeof Colors.light) =>
     modalFooter: {
       flexDirection: 'row',
       gap: Spacing.md,
-      paddingTop: Spacing.lg,
-      paddingBottom: Spacing.sm,
+      paddingTop: Spacing.md,
     },
     modalButton: {
       flex: 1,

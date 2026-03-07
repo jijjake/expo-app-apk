@@ -1,7 +1,7 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { View, TouchableOpacity, Modal, TextInput, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { View, TouchableOpacity, Modal, TextInput, ScrollView, KeyboardAvoidingView, Platform, Alert, BackHandler } from 'react-native';
 import { FontAwesome6 } from '@expo/vector-icons';
-import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import dayjs from 'dayjs';
 
 import { Screen } from '@/components/Screen';
@@ -53,6 +53,7 @@ export default function TasksScreen() {
   const [loading, setLoading] = useState(true);
   const [taskModalVisible, setTaskModalVisible] = useState(false);
   const [expandedPatients, setExpandedPatients] = useState<Set<number>>(new Set());
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const [timers, setTimers] = useState<Record<number, { elapsed: number; isRunning: boolean; startTime: number | null }>>({});
 
@@ -60,6 +61,10 @@ export default function TasksScreen() {
   const [bedNumber, setBedNumber] = useState('');
   const [selectedProjectIds, setSelectedProjectIds] = useState<number[]>([]);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [taskNotes, setTaskNotes] = useState('');
+  const [taskDuration, setTaskDuration] = useState('20');
+
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const loadData = useCallback(async () => {
     try {
@@ -172,18 +177,12 @@ export default function TasksScreen() {
     });
   };
 
-  const showDatePickerDialog = () => {
-    DateTimePickerAndroid.open({
-      value: dayjs(selectedDate).toDate(),
-      onChange: (event, selectedDate) => {
-        if (event.type === 'set' && selectedDate) {
-          const newDate = dayjs(selectedDate).format('YYYY-MM-DD');
-          setSelectedDate(newDate);
-        }
-      },
-      mode: 'date',
-      is24Hour: true,
-    });
+  const handleDateChange = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(false);
+    if (event.type === 'set' && selectedDate) {
+      const newDate = dayjs(selectedDate).format('YYYY-MM-DD');
+      setSelectedDate(newDate);
+    }
   };
 
   const startTimer = async (taskId: number) => {
@@ -291,9 +290,9 @@ export default function TasksScreen() {
           bed_number: bedNumber.trim(),
         });
 
-        const project = projects.find(p => p.id === selectedProjectIds[0]);
         await LocalStorageService.updateTask(editingTask.id, {
-          duration: project?.default_duration || 20,
+          duration: parseInt(taskDuration, 10) || 20,
+          notes: taskNotes.trim() || null,
         });
 
         setTaskModalVisible(false);
@@ -340,6 +339,8 @@ export default function TasksScreen() {
     setBedNumber('');
     setSelectedProjectIds([]);
     setEditingTask(null);
+    setTaskNotes('');
+    setTaskDuration('20');
   };
 
   const openEditTask = (task: Task) => {
@@ -347,6 +348,8 @@ export default function TasksScreen() {
     setPatientName(task.patients.name);
     setBedNumber(task.patients.bed_number);
     setSelectedProjectIds([task.project_id]);
+    setTaskNotes(task.notes || '');
+    setTaskDuration(task.duration.toString());
     setTaskModalVisible(true);
   };
 
@@ -366,6 +369,19 @@ export default function TasksScreen() {
       breathe: 'wind',
       cognitive: 'lightbulb',
       physical: 'person-walking',
+      hand: 'hand',
+      foot: 'shoe-prints',
+      neck: 'user-injured',
+      back: 'spine',
+      joint: 'bone',
+      electro: 'bolt',
+      heat: 'temperature-high',
+      ultrasound: 'wave-square',
+      traction: 'arrows-alt-v',
+      massage: 'hands',
+      acupuncture: 'syringe',
+      cupping: 'circle',
+      moxibustion: 'fire',
     };
     return iconMap[iconName] || 'notes-medical';
   };
@@ -386,7 +402,7 @@ export default function TasksScreen() {
         <ThemedView style={styles.header}>
           <TouchableOpacity
             style={styles.dateButton}
-            onPress={showDatePickerDialog}
+            onPress={() => setShowDatePicker(true)}
           >
             <FontAwesome6 name="calendar" size={18} color={theme.primary} />
             <ThemedText style={styles.dateText}>{selectedDate}</ThemedText>
@@ -403,7 +419,13 @@ export default function TasksScreen() {
           </View>
         </ThemedView>
 
-        <ScrollView style={styles.taskList}>
+        <ScrollView 
+          ref={scrollViewRef}
+          style={styles.taskList}
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+          overScrollMode="never"
+        >
           {loading ? (
             <View style={styles.emptyContainer}>
               <ThemedText color={theme.textMuted}>加载中...</ThemedText>
@@ -545,6 +567,15 @@ export default function TasksScreen() {
           )}
         </ScrollView>
 
+        {showDatePicker && (
+          <DateTimePicker
+            value={dayjs(selectedDate).toDate()}
+            mode="date"
+            display="default"
+            onChange={handleDateChange}
+          />
+        )}
+
         <Modal
           visible={taskModalVisible}
           transparent
@@ -564,7 +595,7 @@ export default function TasksScreen() {
                   </TouchableOpacity>
                 </View>
 
-                <View style={styles.modalBody}>
+                <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
                   <View style={styles.formGroup}>
                     <ThemedText variant="caption" color={theme.textSecondary} style={styles.label}>
                       病人姓名 *
@@ -635,7 +666,41 @@ export default function TasksScreen() {
                       ))}
                     </View>
                   </View>
-                </View>
+
+                  {editingTask && (
+                    <>
+                      <View style={styles.formGroup}>
+                        <ThemedText variant="caption" color={theme.textSecondary} style={styles.label}>
+                          治疗时长（分钟）
+                        </ThemedText>
+                        <TextInput
+                          style={[styles.input, styles.textInput]}
+                          value={taskDuration}
+                          onChangeText={setTaskDuration}
+                          placeholder="请输入治疗时长"
+                          placeholderTextColor={theme.textMuted}
+                          keyboardType="number-pad"
+                        />
+                      </View>
+
+                      <View style={styles.formGroup}>
+                        <ThemedText variant="caption" color={theme.textSecondary} style={styles.label}>
+                          备注
+                        </ThemedText>
+                        <TextInput
+                          style={[styles.input, styles.textInput, styles.textArea]}
+                          value={taskNotes}
+                          onChangeText={setTaskNotes}
+                          placeholder="请输入备注信息"
+                          placeholderTextColor={theme.textMuted}
+                          multiline
+                          numberOfLines={3}
+                          textAlignVertical="top"
+                        />
+                      </View>
+                    </>
+                  )}
+                </ScrollView>
 
                 <View style={styles.modalFooter}>
                   <TouchableOpacity

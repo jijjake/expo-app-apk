@@ -9,6 +9,39 @@ import { useTheme } from '@/hooks/useTheme';
 import { createStyles } from './styles';
 import { LocalStorageService, TreatmentProject } from '@/services/localStorage';
 
+const ICON_OPTIONS = [
+  { id: 'brain', name: '经颅磁', icon: 'brain' },
+  { id: 'heart', name: '生物反馈', icon: 'heart-pulse' },
+  { id: 'muscle', name: '肌肉训练', icon: 'hand-fist' },
+  { id: 'speech', name: '言语治疗', icon: 'comment-medical' },
+  { id: 'balance', name: '平衡训练', icon: 'scale-balanced' },
+  { id: 'breathe', name: '呼吸训练', icon: 'wind' },
+  { id: 'cognitive', name: '认知训练', icon: 'lightbulb' },
+  { id: 'physical', name: '物理治疗', icon: 'person-walking' },
+  { id: 'hand', name: '手部康复', icon: 'hand' },
+  { id: 'foot', name: '足部康复', icon: 'shoe-prints' },
+  { id: 'neck', name: '颈部治疗', icon: 'user-injured' },
+  { id: 'back', name: '脊柱康复', icon: 'spine' },
+  { id: 'joint', name: '关节治疗', icon: 'bone' },
+  { id: 'electro', name: '电疗', icon: 'bolt' },
+  { id: 'heat', name: '热疗', icon: 'temperature-high' },
+  { id: 'ultrasound', name: '超声治疗', icon: 'wave-square' },
+  { id: 'traction', name: '牵引治疗', icon: 'arrows-alt-v' },
+  { id: 'massage', name: '推拿按摩', icon: 'hands' },
+  { id: 'acupuncture', name: '针灸', icon: 'syringe' },
+  { id: 'cupping', name: '拔罐', icon: 'circle' },
+  { id: 'moxibustion', name: '艾灸', icon: 'fire' },
+  { id: 'water', name: '水疗', icon: 'water' },
+  { id: 'oxygen', name: '氧疗', icon: 'lungs' },
+  { id: 'light', name: '光疗', icon: 'sun' },
+  { id: 'magnetic', name: '磁疗', icon: 'magnet' },
+  { id: 'laser', name: '激光治疗', icon: 'bolt-lightning' },
+  { id: 'cryo', name: '冷疗', icon: 'snowflake' },
+  { id: 'vibration', name: '振动治疗', icon: 'wave-circle' },
+  { id: 'stretch', name: '拉伸训练', icon: 'arrows-left-right' },
+  { id: 'posture', name: '姿势矫正', icon: 'person' },
+];
+
 export default function ProjectsScreen() {
   const { theme, isDark } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -22,17 +55,6 @@ export default function ProjectsScreen() {
   const [description, setDescription] = useState('');
   const [defaultDuration, setDefaultDuration] = useState('20');
   const [selectedIcon, setSelectedIcon] = useState('brain');
-
-  const iconOptions = [
-    { id: 'brain', name: '经颅磁', icon: 'brain' },
-    { id: 'heart', name: '生物反馈', icon: 'heart-pulse' },
-    { id: 'muscle', name: '肌肉训练', icon: 'hand-fist' },
-    { id: 'speech', name: '言语治疗', icon: 'comment-medical' },
-    { id: 'balance', name: '平衡训练', icon: 'scale-balanced' },
-    { id: 'breathe', name: '呼吸训练', icon: 'wind' },
-    { id: 'cognitive', name: '认知训练', icon: 'lightbulb' },
-    { id: 'physical', name: '物理治疗', icon: 'person-walking' },
-  ];
 
   const fetchProjects = useCallback(async () => {
     try {
@@ -126,6 +148,42 @@ export default function ProjectsScreen() {
     ]);
   };
 
+  const getIconComponent = (iconName: string) => {
+    const iconMap: Record<string, any> = {
+      brain: 'brain',
+      heart: 'heart-pulse',
+      muscle: 'hand-fist',
+      speech: 'comment-medical',
+      balance: 'scale-balanced',
+      breathe: 'wind',
+      cognitive: 'lightbulb',
+      physical: 'person-walking',
+      hand: 'hand',
+      foot: 'shoe-prints',
+      neck: 'user-injured',
+      back: 'spine',
+      joint: 'bone',
+      electro: 'bolt',
+      heat: 'temperature-high',
+      ultrasound: 'wave-square',
+      traction: 'arrows-alt-v',
+      massage: 'hands',
+      acupuncture: 'syringe',
+      cupping: 'circle',
+      moxibustion: 'fire',
+      water: 'water',
+      oxygen: 'lungs',
+      light: 'sun',
+      magnetic: 'magnet',
+      laser: 'bolt-lightning',
+      cryo: 'snowflake',
+      vibration: 'wave-circle',
+      stretch: 'arrows-left-right',
+      posture: 'person',
+    };
+    return iconMap[iconName] || 'notes-medical';
+  };
+
   return (
     <Screen backgroundColor={theme.backgroundRoot} statusBarStyle={isDark ? 'light' : 'dark'}>
       <ThemedView style={styles.header}>
@@ -140,7 +198,12 @@ export default function ProjectsScreen() {
         </TouchableOpacity>
       </ThemedView>
 
-        <View style={styles.projectList}>
+        <ScrollView 
+          style={styles.projectList}
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+          overScrollMode="never"
+        >
           {loading ? (
             <View style={styles.emptyContainer}>
               <ThemedText color={theme.textMuted}>加载中...</ThemedText>
@@ -165,12 +228,13 @@ export default function ProjectsScreen() {
                 onPress={() => openEditProject(project)}
               >
                 <View style={styles.projectLeft}>
-                  <FontAwesome6
-                    name={project.icon as any}
-                    size={16}
-                    color={theme.primary}
-                    style={styles.projectIcon}
-                  />
+                  <View style={styles.projectIconWrapper}>
+                    <FontAwesome6
+                      name={getIconComponent(project.icon)}
+                      size={18}
+                      color={theme.primary}
+                    />
+                  </View>
                   <View style={styles.projectInfo}>
                     <ThemedText variant="body" color={theme.textPrimary} style={styles.projectName}>
                       {project.name}
@@ -192,7 +256,7 @@ export default function ProjectsScreen() {
               </TouchableOpacity>
             ))
           )}
-        </View>
+        </ScrollView>
 
         <Modal
           visible={projectModalVisible}
@@ -215,7 +279,7 @@ export default function ProjectsScreen() {
                   </TouchableOpacity>
                 </View>
 
-                <ScrollView style={styles.modalBody} keyboardShouldPersistTaps="handled">
+                <ScrollView style={styles.modalBody} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
                   <View style={styles.formGroup}>
                     <ThemedText variant="caption" color={theme.textSecondary} style={styles.label}>
                       项目名称 *
@@ -263,7 +327,7 @@ export default function ProjectsScreen() {
                       项目图标 *
                     </ThemedText>
                     <View style={styles.iconSelector}>
-                      {iconOptions.map((option) => (
+                      {ICON_OPTIONS.map((option) => (
                         <TouchableOpacity
                           key={option.id}
                           style={[
@@ -288,6 +352,7 @@ export default function ProjectsScreen() {
                                 ? theme.buttonPrimaryText
                                 : theme.textSecondary
                             }
+                            style={styles.iconOptionText}
                           >
                             {option.name}
                           </ThemedText>

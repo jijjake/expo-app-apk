@@ -83,6 +83,28 @@ export default function PatientHistoryScreen() {
       breathe: 'wind',
       cognitive: 'lightbulb',
       physical: 'person-walking',
+      hand: 'hand',
+      foot: 'shoe-prints',
+      neck: 'user-injured',
+      back: 'spine',
+      joint: 'bone',
+      electro: 'bolt',
+      heat: 'temperature-high',
+      ultrasound: 'wave-square',
+      traction: 'arrows-alt-v',
+      massage: 'hands',
+      acupuncture: 'syringe',
+      cupping: 'circle',
+      moxibustion: 'fire',
+      water: 'water',
+      oxygen: 'lungs',
+      light: 'sun',
+      magnetic: 'magnet',
+      laser: 'bolt-lightning',
+      cryo: 'snowflake',
+      vibration: 'wave-circle',
+      stretch: 'arrows-left-right',
+      posture: 'person',
     };
     return iconMap[iconName] || 'notes-medical';
   };
@@ -129,65 +151,70 @@ export default function PatientHistoryScreen() {
           <FontAwesome6 name="arrow-left" size={18} color={theme.textPrimary} />
         </TouchableOpacity>
         <ThemedText variant="h4" color={theme.textPrimary} style={styles.headerTitle}>
-            {patientName}
-          </ThemedText>
-          <View style={{ width: 40 }} />
-        </ThemedView>
+          {patientName}
+        </ThemedText>
+        <View style={{ width: 40 }} />
+      </ThemedView>
 
-        <ScrollView style={styles.historyList}>
-          {loading ? (
-            <View style={styles.emptyContainer}>
-              <ThemedText color={theme.textMuted}>加载中...</ThemedText>
-            </View>
-          ) : dates.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <FontAwesome6 name="file-medical" size={40} color={theme.textMuted} />
-              <ThemedText style={styles.emptyText} color={theme.textMuted}>
-                暂无历史记录
-              </ThemedText>
-            </View>
-          ) : (
-            dates.map((date) => (
-              <View key={date} style={styles.dateSection}>
-                <ThemedView style={styles.dateHeader}>
-                  <ThemedText variant="bodyMedium" color={theme.primary}>
-                    {date}
-                  </ThemedText>
-                  <ThemedText variant="caption" color={theme.textMuted}>
-                    {history[date].length} 个项目
-                  </ThemedText>
-                </ThemedView>
+      <ScrollView 
+        style={styles.historyList}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+        overScrollMode="never"
+      >
+        {loading ? (
+          <View style={styles.emptyContainer}>
+            <ThemedText color={theme.textMuted}>加载中...</ThemedText>
+          </View>
+        ) : dates.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <FontAwesome6 name="file-medical" size={40} color={theme.textMuted} />
+            <ThemedText style={styles.emptyText} color={theme.textMuted}>
+              暂无历史记录
+            </ThemedText>
+          </View>
+        ) : (
+          dates.map((date) => (
+            <View key={date} style={styles.dateSection}>
+              <ThemedView style={styles.dateHeader}>
+                <ThemedText variant="bodyMedium" color={theme.primary}>
+                  {date}
+                </ThemedText>
+                <ThemedText variant="caption" color={theme.textMuted}>
+                  {history[date].length} 个项目
+                </ThemedText>
+              </ThemedView>
 
-                {history[date].map((task) => (
-                  <View key={task.id} style={styles.taskItem}>
-                    <FontAwesome6
-                      name={getProjectIcon(task.treatment_projects.icon)}
-                      size={16}
-                      color={theme.primary}
-                      style={styles.taskIcon}
-                    />
-                    <ThemedText variant="body" color={theme.textPrimary} style={styles.taskName}>
-                      {task.treatment_projects.name}
+              {history[date].map((task) => (
+                <View key={task.id} style={styles.taskItem}>
+                  <FontAwesome6
+                    name={getProjectIcon(task.treatment_projects.icon)}
+                    size={16}
+                    color={theme.primary}
+                    style={styles.taskIcon}
+                  />
+                  <ThemedText variant="body" color={theme.textPrimary} style={styles.taskName}>
+                    {task.treatment_projects.name}
+                  </ThemedText>
+                  <ThemedText variant="caption" color={theme.textSecondary} style={styles.taskDuration}>
+                    {task.duration}分钟
+                  </ThemedText>
+                  <View
+                    style={[
+                      styles.statusBadge,
+                      { backgroundColor: getStatusColor(task.status) + '15' },
+                    ]}
+                  >
+                    <ThemedText variant="caption" color={getStatusColor(task.status)}>
+                      {getStatusText(task.status)}
                     </ThemedText>
-                    <ThemedText variant="caption" color={theme.textSecondary} style={styles.taskDuration}>
-                      {task.duration}分钟
-                    </ThemedText>
-                    <View
-                      style={[
-                        styles.statusBadge,
-                        { backgroundColor: getStatusColor(task.status) + '15' },
-                      ]}
-                    >
-                      <ThemedText variant="caption" color={getStatusColor(task.status)}>
-                        {getStatusText(task.status)}
-                      </ThemedText>
-                    </View>
                   </View>
-                ))}
-              </View>
-            ))
-          )}
-        </ScrollView>
+                </View>
+              ))}
+            </View>
+          ))
+        )}
+      </ScrollView>
     </Screen>
   );
 }

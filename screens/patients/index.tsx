@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { View, TouchableOpacity, Alert, Modal, TextInput } from 'react-native';
+import { View, TouchableOpacity, Alert, Modal, TextInput, ScrollView } from 'react-native';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { useSafeRouter } from '@/hooks/useSafeRouter';
 
@@ -28,6 +28,7 @@ export default function PatientsScreen() {
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
   const [editName, setEditName] = useState('');
   const [editBedNumber, setEditBedNumber] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchPatients = useCallback(async () => {
     try {
@@ -44,6 +45,15 @@ export default function PatientsScreen() {
   useEffect(() => {
     fetchPatients();
   }, [fetchPatients]);
+
+  const filteredPatients = useMemo(() => {
+    if (!searchQuery.trim()) return patients;
+    const query = searchQuery.toLowerCase().trim();
+    return patients.filter(p => 
+      p.name.toLowerCase().includes(query) || 
+      p.bed_number.toLowerCase().includes(query)
+    );
+  }, [patients, searchQuery]);
 
   const viewPatientHistory = (patient: Patient) => {
     router.push('/patient-history', { patientId: patient.id, patientName: patient.name });
@@ -76,6 +86,25 @@ export default function PatientsScreen() {
     }
   };
 
+  const deletePatient = async (patient: Patient) => {
+    Alert.alert('确认删除', `确定要删除病人"${patient.name}"吗？相关的任务记录也会被删除。`, [
+      { text: '取消', style: 'cancel' },
+      {
+        text: '删除',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await LocalStorageService.deletePatient(patient.id);
+            fetchPatients();
+          } catch (error) {
+            console.error('Failed to delete patient:', error);
+            Alert.alert('错误', '删除失败，请重试');
+          }
+        },
+      },
+    ]);
+  };
+
   return (
     <Screen backgroundColor={theme.backgroundRoot} statusBarStyle={isDark ? 'light' : 'dark'}>
       <View style={styles.container}>
@@ -91,20 +120,43 @@ export default function PatientsScreen() {
           </TouchableOpacity>
         </ThemedView>
 
-        <View style={styles.patientList}>
+        <View style={styles.searchContainer}>
+          <View style={styles.searchInputWrapper}>
+            <FontAwesome6 name="magnifying-glass" size={16} color={theme.textMuted} />
+            <TextInput
+              style={styles.searchInput}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder="搜索病人姓名或床号..."
+              placeholderTextColor={theme.textMuted}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <FontAwesome6 name="xmark" size={14} color={theme.textMuted} />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        <ScrollView 
+          style={styles.patientList}
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+          overScrollMode="never"
+        >
           {loading ? (
             <View style={styles.emptyContainer}>
               <ThemedText color={theme.textMuted}>加载中...</ThemedText>
             </View>
-          ) : patients.length === 0 ? (
+          ) : filteredPatients.length === 0 ? (
             <View style={styles.emptyContainer}>
               <FontAwesome6 name="users" size={40} color={theme.textMuted} />
               <ThemedText style={styles.emptyText} color={theme.textMuted}>
-                暂无病人
+                {searchQuery ? '未找到匹配的病人' : '暂无病人'}
               </ThemedText>
             </View>
           ) : (
-            patients.map((patient) => (
+            filteredPatients.map((patient) => (
               <TouchableOpacity
                 key={patient.id}
                 style={styles.patientItem}
@@ -130,12 +182,21 @@ export default function PatientsScreen() {
                   >
                     <FontAwesome6 name="pen" size={14} color={theme.textMuted} />
                   </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.deleteButton}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      deletePatient(patient);
+                    }}
+                  >
+                    <FontAwesome6 name="trash" size={14} color="#EF4444" />
+                  </TouchableOpacity>
                   <FontAwesome6 name="chevron-right" size={14} color={theme.textMuted} />
                 </View>
               </TouchableOpacity>
             ))
           )}
-        </View>
+        </ScrollView>
 
         <Modal
           visible={editModalVisible}

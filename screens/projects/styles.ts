@@ -75,9 +75,9 @@ export const createStyles = (theme: typeof Colors.light) =>
       gap: Spacing.sm,
       flex: 1,
     },
-    projectIcon: {
-      width: 32,
-      height: 32,
+    projectIconWrapper: {
+      width: 40,
+      height: 40,
       borderRadius: BorderRadius.md,
       backgroundColor: theme.backgroundTertiary,
       justifyContent: 'center',
@@ -160,16 +160,20 @@ export const createStyles = (theme: typeof Colors.light) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: Spacing.xs,
-      paddingHorizontal: Spacing.md,
-      paddingVertical: Spacing.sm,
-      borderRadius: BorderRadius.lg,
+      paddingHorizontal: Spacing.sm,
+      paddingVertical: Spacing.xs,
+      borderRadius: BorderRadius.md,
       backgroundColor: theme.backgroundRoot,
       borderWidth: 1.5,
       borderColor: theme.border,
+      minWidth: 80,
     },
     iconOptionSelected: {
       backgroundColor: theme.primary,
       borderColor: theme.primary,
+    },
+    iconOptionText: {
+      fontSize: 11,
     },
     modalFooter: {
       flexDirection: 'row',
