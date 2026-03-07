@@ -34,6 +34,13 @@ jobs:
             echo "=== npm install Capacitor failed ==="
             exit 1
           }
+      - name: Build web app
+        run: |
+          echo "=== Building web app ==="
+          npx expo export --platform web || {
+            echo "=== web build failed ==="
+            exit 1
+          }
       - name: Sync Capacitor
         run: |
           echo "=== Syncing Capacitor ==="
