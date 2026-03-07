@@ -39,14 +39,18 @@ export default function ScanScreen() {
   const [isProcessing, setIsProcessing] = useState(false);
 
   const toggleCameraFacing = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     setFacing((current) => (current === 'back' ? 'front' : 'back'));
   }, []);
 
   const takePicture = useCallback(async () => {
     if (!cameraRef.current || isProcessing) return;
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
     setIsProcessing(true);
 
     try {
@@ -135,7 +139,9 @@ export default function ScanScreen() {
       }
 
       setIsProcessing(false);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
 
       Alert.alert(
         '识别成功',
