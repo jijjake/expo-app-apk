@@ -5,12 +5,35 @@ import { StatusBar } from 'expo-status-bar';
 import { LogBox, Platform } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { AuthProvider } from "@/contexts/AuthContext";
-import { ColorSchemeProvider } from '@/hooks/useColorScheme';
+import { ColorSchemeProvider, useColorScheme } from '@/hooks/useColorScheme';
 import { LocalStorageService } from '@/services/localStorage';
 
 LogBox.ignoreLogs([
   "TurboModuleRegistry.getEnforcing(...): 'RNMapsAirModule' could not be found",
 ]);
+
+function RootLayoutNav() {
+  const colorScheme = useColorScheme();
+  
+  return (
+    <>
+      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+      <Stack screenOptions={{
+        animation: 'slide_from_right',
+        gestureEnabled: true,
+        gestureDirection: 'horizontal',
+        headerShown: false,
+        contentStyle: {
+          paddingTop: Platform.OS === 'android' ? 0 : 0,
+        }
+      }}>
+        <Stack.Screen name="(tabs)" options={{ title: "" }} />
+        <Stack.Screen name="patient-history" options={{ title: "病人历史" }} />
+      </Stack>
+      <Toast />
+    </>
+  );
+}
 
 export default function RootLayout() {
   useEffect(() => {
@@ -21,23 +44,7 @@ export default function RootLayout() {
     <AuthProvider>
       <ColorSchemeProvider>
         <GestureHandlerRootView style={{ flex: 1 }}>
-          <StatusBar style="dark" />
-          <Stack screenOptions={{
-            // 设置所有页面的切换动画为从右侧滑入，适用于iOS 和 Android
-            animation: 'slide_from_right',
-            gestureEnabled: true,
-            gestureDirection: 'horizontal',
-            // 隐藏自带的头部
-            headerShown: false,
-            // 移动端设置内容边缘，让状态栏和内容紧密贴合
-            contentStyle: {
-              paddingTop: Platform.OS === 'android' ? 0 : 0,
-            }
-          }}>
-            <Stack.Screen name="(tabs)" options={{ title: "" }} />
-            <Stack.Screen name="patient-history" options={{ title: "病人历史" }} />
-          </Stack>
-          <Toast />
+          <RootLayoutNav />
         </GestureHandlerRootView>
       </ColorSchemeProvider>
     </AuthProvider>

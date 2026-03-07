@@ -1,57 +1,65 @@
-import { StyleSheet } from 'react-native';
-import { Spacing, BorderRadius, Theme } from '@/constants/theme';
+import { StyleSheet, Platform } from 'react-native';
+import { Colors, Spacing, BorderRadius } from '@/constants/theme';
 
-export const createStyles = (theme: Theme) => {
-  return StyleSheet.create({
+export const createStyles = (theme: typeof Colors.light) =>
+  StyleSheet.create({
     container: {
       flex: 1,
+      backgroundColor: theme.backgroundRoot,
     },
     header: {
       flexDirection: 'row',
-      alignItems: 'center',
       justifyContent: 'space-between',
-      paddingHorizontal: Spacing.md,
-      paddingVertical: Spacing.sm,
+      alignItems: 'center',
+      paddingHorizontal: Spacing.lg,
+      paddingVertical: Spacing.md,
       backgroundColor: theme.backgroundDefault,
       borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: theme.border,
+      borderBottomColor: theme.borderLight,
     },
     iconButton: {
       width: 36,
       height: 36,
       borderRadius: BorderRadius.md,
-      backgroundColor: theme.backgroundTertiary,
       justifyContent: 'center',
       alignItems: 'center',
+      backgroundColor: theme.backgroundTertiary,
     },
     patientList: {
       flex: 1,
-      backgroundColor: theme.backgroundRoot,
+      paddingHorizontal: Spacing.md,
     },
     emptyContainer: {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
       gap: Spacing.md,
-      padding: Spacing.xl,
+      paddingVertical: Spacing['5xl'],
     },
     emptyText: {
       fontSize: 14,
+      marginTop: Spacing.sm,
     },
     patientItem: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingHorizontal: Spacing.md,
-      paddingVertical: Spacing.sm,
       backgroundColor: theme.backgroundDefault,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: theme.borderLight,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.md,
+      marginTop: Spacing.sm,
+      borderRadius: BorderRadius.lg,
+      ...Platform.select({
+        android: {
+          elevation: 1,
+        },
+      }),
     },
     patientLeft: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: Spacing.sm,
+      flex: 1,
     },
     bedBadge: {
       backgroundColor: theme.primary,
@@ -80,64 +88,73 @@ export const createStyles = (theme: Theme) => {
       borderRadius: BorderRadius.sm,
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: theme.backgroundTertiary,
+      backgroundColor: theme.backgroundRoot,
     },
     modalOverlay: {
       flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      justifyContent: 'center',
-      padding: Spacing.xl,
+      backgroundColor: 'rgba(0, 0, 0, 0.6)',
+      justifyContent: 'flex-end',
     },
     modalContent: {
-      width: '100%',
-      maxWidth: 400,
+      backgroundColor: theme.backgroundDefault,
+      borderTopLeftRadius: BorderRadius.xl,
+      borderTopRightRadius: BorderRadius.xl,
+      paddingHorizontal: Spacing.lg,
+      paddingVertical: Spacing.lg,
     },
     modalBody: {
       backgroundColor: theme.backgroundDefault,
       borderRadius: BorderRadius.lg,
-      padding: Spacing.lg,
       gap: Spacing.lg,
     },
     modalHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
+      paddingBottom: Spacing.md,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.borderLight,
     },
     formGroup: {
       gap: Spacing.xs,
     },
     label: {
-      fontSize: 12,
-      fontWeight: '500',
+      fontSize: 13,
+      fontWeight: '600',
+      color: theme.textSecondary,
     },
     input: {
       backgroundColor: theme.backgroundRoot,
-      borderRadius: BorderRadius.md,
+      borderRadius: BorderRadius.lg,
       paddingHorizontal: Spacing.md,
-      paddingVertical: Spacing.sm,
-      borderWidth: StyleSheet.hairlineWidth,
+      paddingVertical: Spacing.md,
+      borderWidth: 1,
       borderColor: theme.border,
+      minHeight: 48,
       fontSize: 16,
       color: theme.textPrimary,
-      minHeight: 44,
     },
     modalFooter: {
       flexDirection: 'row',
-      gap: Spacing.sm,
-      paddingTop: Spacing.sm,
+      gap: Spacing.md,
+      paddingTop: Spacing.lg,
+      paddingBottom: Spacing.sm,
     },
     modalButton: {
       flex: 1,
       paddingVertical: Spacing.md,
-      borderRadius: BorderRadius.md,
+      borderRadius: BorderRadius.lg,
       alignItems: 'center',
+      minHeight: 48,
     },
     cancelButton: {
       backgroundColor: theme.backgroundRoot,
+      borderWidth: 1,
+      borderColor: theme.border,
     },
     cancelButtonText: {
       fontSize: 16,
-      fontWeight: '500',
+      fontWeight: '600',
       color: theme.textSecondary,
     },
     confirmButton: {
@@ -146,7 +163,5 @@ export const createStyles = (theme: Theme) => {
     confirmButtonText: {
       fontSize: 16,
       fontWeight: '600',
-      color: theme.buttonPrimaryText,
     },
   });
-};

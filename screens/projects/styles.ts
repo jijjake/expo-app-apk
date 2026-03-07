@@ -1,51 +1,53 @@
-import { StyleSheet } from 'react-native';
-import { Spacing, BorderRadius, Theme } from '@/constants/theme';
+import { StyleSheet, Platform } from 'react-native';
+import { Colors, Spacing, BorderRadius } from '@/constants/theme';
 
-export const createStyles = (theme: Theme) => {
-  return StyleSheet.create({
+export const createStyles = (theme: typeof Colors.light) =>
+  StyleSheet.create({
     container: {
       flex: 1,
+      backgroundColor: theme.backgroundRoot,
     },
     header: {
       flexDirection: 'row',
-      alignItems: 'center',
       justifyContent: 'space-between',
-      paddingHorizontal: Spacing.md,
-      paddingVertical: Spacing.sm,
+      alignItems: 'center',
+      paddingHorizontal: Spacing.lg,
+      paddingVertical: Spacing.md,
       backgroundColor: theme.backgroundDefault,
       borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: theme.border,
+      borderBottomColor: theme.borderLight,
     },
     iconButton: {
       width: 36,
       height: 36,
       borderRadius: BorderRadius.md,
-      backgroundColor: theme.backgroundTertiary,
       justifyContent: 'center',
       alignItems: 'center',
+      backgroundColor: theme.backgroundTertiary,
     },
     addButton: {
       backgroundColor: theme.primary,
     },
     projectList: {
       flex: 1,
-      backgroundColor: theme.backgroundRoot,
+      paddingHorizontal: Spacing.md,
     },
     emptyContainer: {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
       gap: Spacing.md,
-      padding: Spacing.xl,
+      paddingVertical: Spacing['5xl'],
     },
     emptyText: {
       fontSize: 14,
+      marginTop: Spacing.sm,
     },
     emptyButton: {
       backgroundColor: theme.primary,
       paddingHorizontal: Spacing.xl,
       paddingVertical: Spacing.md,
-      borderRadius: BorderRadius.md,
+      borderRadius: BorderRadius.lg,
       marginTop: Spacing.md,
     },
     emptyButtonText: {
@@ -56,76 +58,92 @@ export const createStyles = (theme: Theme) => {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingHorizontal: Spacing.md,
-      paddingVertical: Spacing.sm,
       backgroundColor: theme.backgroundDefault,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: theme.borderLight,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.md,
+      marginTop: Spacing.sm,
+      borderRadius: BorderRadius.lg,
+      ...Platform.select({
+        android: {
+          elevation: 1,
+        },
+      }),
     },
     projectLeft: {
       flexDirection: 'row',
       alignItems: 'center',
-      flex: 1,
       gap: Spacing.sm,
+      flex: 1,
     },
     projectIcon: {
       width: 32,
-      textAlign: 'center',
+      height: 32,
+      borderRadius: BorderRadius.md,
+      backgroundColor: theme.backgroundTertiary,
+      justifyContent: 'center',
+      alignItems: 'center',
     },
     projectInfo: {
       flex: 1,
+      gap: 2,
     },
     projectName: {
-      fontSize: 14,
       fontWeight: '500',
     },
     deleteButton: {
-      padding: Spacing.xs,
+      width: 32,
+      height: 32,
+      borderRadius: BorderRadius.sm,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'rgba(239, 68, 68, 0.1)',
     },
     modalOverlay: {
       flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      backgroundColor: 'rgba(0, 0, 0, 0.6)',
       justifyContent: 'flex-end',
     },
     modalContainer: {
-      width: '100%',
+      backgroundColor: theme.backgroundDefault,
       borderTopLeftRadius: BorderRadius.xl,
       borderTopRightRadius: BorderRadius.xl,
+      maxHeight: '90%',
     },
     modalContent: {
-      backgroundColor: theme.backgroundDefault,
       paddingHorizontal: Spacing.lg,
       paddingVertical: Spacing.lg,
-      paddingBottom: Spacing.xl,
-      gap: Spacing.lg,
     },
     modalHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
+      paddingBottom: Spacing.md,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.borderLight,
     },
     modalBody: {
-      maxHeight: '60%',
       gap: Spacing.lg,
+      maxHeight: 400,
     },
     formGroup: {
       gap: Spacing.xs,
     },
     label: {
-      fontSize: 12,
-      fontWeight: '500',
+      fontSize: 13,
+      fontWeight: '600',
+      color: theme.textSecondary,
     },
     input: {
       backgroundColor: theme.backgroundRoot,
-      borderRadius: BorderRadius.md,
+      borderRadius: BorderRadius.lg,
       paddingHorizontal: Spacing.md,
-      paddingVertical: Spacing.sm,
-      borderWidth: StyleSheet.hairlineWidth,
+      paddingVertical: Spacing.md,
+      borderWidth: 1,
       borderColor: theme.border,
-      minHeight: 44,
+      minHeight: 48,
+      fontSize: 16,
     },
     textInput: {
-      fontSize: 16,
       color: theme.textPrimary,
     },
     textArea: {
@@ -136,17 +154,17 @@ export const createStyles = (theme: Theme) => {
     iconSelector: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      gap: Spacing.xs,
+      gap: Spacing.sm,
     },
     iconOption: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 4,
-      paddingHorizontal: Spacing.sm,
-      paddingVertical: Spacing.xs,
-      borderRadius: BorderRadius.md,
+      gap: Spacing.xs,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm,
+      borderRadius: BorderRadius.lg,
       backgroundColor: theme.backgroundRoot,
-      borderWidth: StyleSheet.hairlineWidth,
+      borderWidth: 1.5,
       borderColor: theme.border,
     },
     iconOptionSelected: {
@@ -155,21 +173,25 @@ export const createStyles = (theme: Theme) => {
     },
     modalFooter: {
       flexDirection: 'row',
-      gap: Spacing.sm,
-      paddingTop: Spacing.sm,
+      gap: Spacing.md,
+      paddingTop: Spacing.lg,
+      paddingBottom: Spacing.sm,
     },
     modalButton: {
       flex: 1,
       paddingVertical: Spacing.md,
-      borderRadius: BorderRadius.md,
+      borderRadius: BorderRadius.lg,
       alignItems: 'center',
+      minHeight: 48,
     },
     cancelButton: {
       backgroundColor: theme.backgroundRoot,
+      borderWidth: 1,
+      borderColor: theme.border,
     },
     cancelButtonText: {
       fontSize: 16,
-      fontWeight: '500',
+      fontWeight: '600',
       color: theme.textSecondary,
     },
     confirmButton: {
@@ -180,4 +202,3 @@ export const createStyles = (theme: Theme) => {
       fontWeight: '600',
     },
   });
-};
