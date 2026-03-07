@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { View, TouchableOpacity, Alert, Modal, TextInput } from 'react-native';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { useSafeRouter } from '@/hooks/useSafeRouter';
@@ -8,6 +8,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useTheme } from '@/hooks/useTheme';
 import { createStyles } from './styles';
+import { LocalStorageService, Patient as LocalPatient } from '@/services/localStorage';
 
 interface Patient {
   id: number;
@@ -28,35 +29,26 @@ export default function PatientsScreen() {
   const [editName, setEditName] = useState('');
   const [editBedNumber, setEditBedNumber] = useState('');
 
-  const EXPO_PUBLIC_BACKEND_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_BASE_URL || '';
-
-  // 加载病人列表
   const fetchPatients = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${EXPO_PUBLIC_BACKEND_BASE_URL}/api/v1/patients`);
-      const result = await response.json();
-
-      if (result.success) {
-        setPatients(result.data);
-      }
+      const patientsData = await LocalStorageService.getPatients();
+      setPatients(patientsData.map(p => ({ ...p, created_at: new Date().toISOString() })));
     } catch (error) {
       console.error('Failed to fetch patients:', error);
     } finally {
       setLoading(false);
     }
-  }, [EXPO_PUBLIC_BACKEND_BASE_URL]);
+  }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetchPatients();
   }, [fetchPatients]);
 
-  // 查看病人历史记录
   const viewPatientHistory = (patient: Patient) => {
     router.push('/patient-history', { patientId: patient.id, patientName: patient.name });
   };
 
-  // 打开编辑病人
   const openEditPatient = (patient: Patient) => {
     setEditingPatient(patient);
     setEditName(patient.name);
@@ -64,7 +56,6 @@ export default function PatientsScreen() {
     setEditModalVisible(true);
   };
 
-  // 保存病人信息
   const handleSavePatient = async () => {
     if (!editName.trim() || !editBedNumber.trim()) {
       Alert.alert('错误', '请填写所有必填字段');
@@ -72,24 +63,13 @@ export default function PatientsScreen() {
     }
 
     try {
-      const response = await fetch(`${EXPO_PUBLIC_BACKEND_BASE_URL}/api/v1/patients/${editingPatient!.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: editName.trim(),
-          bedNumber: editBedNumber.trim(),
-        }),
+      await LocalStorageService.updatePatient(editingPatient!.id, {
+        name: editName.trim(),
+        bed_number: editBedNumber.trim(),
       });
-
-      const result = await response.json();
-
-      if (result.success) {
-        setEditModalVisible(false);
-        setEditingPatient(null);
-        fetchPatients();
-      } else {
-        Alert.alert('错误', result.error || '保存失败');
-      }
+      setEditModalVisible(false);
+      setEditingPatient(null);
+      fetchPatients();
     } catch (error) {
       console.error('Failed to save patient:', error);
       Alert.alert('错误', '保存失败，请重试');
@@ -99,7 +79,6 @@ export default function PatientsScreen() {
   return (
     <Screen backgroundColor={theme.backgroundRoot} statusBarStyle={isDark ? 'light' : 'dark'}>
       <View style={styles.container}>
-        {/* 顶部标题栏 */}
         <ThemedView style={styles.header}>
           <ThemedText variant="h3" color={theme.textPrimary}>
             病人档案
@@ -112,7 +91,6 @@ export default function PatientsScreen() {
           </TouchableOpacity>
         </ThemedView>
 
-        {/* 病人列表 */}
         <View style={styles.patientList}>
           {loading ? (
             <View style={styles.emptyContainer}>
@@ -159,7 +137,6 @@ export default function PatientsScreen() {
           )}
         </View>
 
-        {/* 病人编辑模态框 */}
         <Modal
           visible={editModalVisible}
           transparent

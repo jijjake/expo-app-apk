@@ -9,6 +9,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useTheme } from '@/hooks/useTheme';
 import { createStyles } from './styles';
+import { LocalStorageService, Task as LocalTask, TreatmentProject, Patient } from '@/services/localStorage';
 
 interface Task {
   id: number;
@@ -36,14 +37,6 @@ interface Task {
   created_at: string;
 }
 
-interface TreatmentProject {
-  id: number;
-  name: string;
-  description: string;
-  default_duration: number;
-  icon: string;
-}
-
 interface PatientGroup {
   patient: Task['patients'];
   tasks: Task[];
@@ -55,93 +48,81 @@ export default function TasksScreen() {
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projects, setProjects] = useState<TreatmentProject[]>([]);
+  const [patients, setPatients] = useState<Patient[]>([]);
   const [selectedDate, setSelectedDate] = useState(dayjs().format('YYYY-MM-DD'));
   const [loading, setLoading] = useState(true);
   const [taskModalVisible, setTaskModalVisible] = useState(false);
-  const [importModalVisible, setImportModalVisible] = useState(false);
   const [expandedPatients, setExpandedPatients] = useState<Set<number>>(new Set());
 
-  // 计时器状态 - 暂停时保存已用时间
   const [timers, setTimers] = useState<Record<number, { elapsed: number; isRunning: boolean; startTime: number | null }>>({});
 
-  // 任务表单状态
   const [patientName, setPatientName] = useState('');
   const [bedNumber, setBedNumber] = useState('');
   const [selectedProjectIds, setSelectedProjectIds] = useState<number[]>([]);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
-  const EXPO_PUBLIC_BACKEND_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_BASE_URL || '';
-
-  // 加载任务列表
-  const fetchTasks = useCallback(async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${EXPO_PUBLIC_BACKEND_BASE_URL}/api/v1/tasks?date=${selectedDate}`);
-      const result = await response.json();
-
-      if (result.success) {
-        setTasks(result.data);
-        // 初始化计时器状态，保留已用时间
-        const timerStates: Record<number, { elapsed: number; isRunning: boolean; startTime: number | null }> = {};
-        result.data.forEach((task: Task) => {
-          if (task.status === 'in_progress') {
-            const startTime = task.started_at ? new Date(task.started_at).getTime() : Date.now();
-            // 保留之前的elapsed时间
-            const prevElapsed = timers[task.id]?.elapsed || 0;
-            timerStates[task.id] = {
-              elapsed: prevElapsed,
-              isRunning: true,
-              startTime,
-            };
-          } else if (task.status === 'pending' || task.status === 'needs_collection') {
-            // 保留之前的elapsed时间（暂停状态）
-            const prevElapsed = timers[task.id]?.elapsed || 0;
-            timerStates[task.id] = {
-              elapsed: prevElapsed,
-              isRunning: false,
-              startTime: null,
-            };
-          } else {
-            // 完成状态，重置计时器
-            timerStates[task.id] = {
-              elapsed: 0,
-              isRunning: false,
-              startTime: null,
-            };
-          }
-        });
-        setTimers(timerStates);
-      }
+      
+      const [projectsData, patientsData, tasksData] = await Promise.all([
+        LocalStorageService.getProjects(),
+        LocalStorageService.getPatients(),
+        LocalStorageService.getTasks(selectedDate),
+      ]);
+      
+      setProjects(projectsData);
+      setPatients(patientsData);
+      
+      const enrichedTasks: Task[] = tasksData.map(task => {
+        const patient = patientsData.find(p => p.id === task.patient_id);
+        const project = projectsData.find(p => p.id === task.project_id);
+        return {
+          ...task,
+          patients: patient ? { id: patient.id, name: patient.name, bed_number: patient.bed_number } : { id: task.patient_id, name: '未知病人', bed_number: '-' },
+          treatment_projects: project ? { ...project } : { id: task.project_id, name: '未知项目', description: '', default_duration: 20, icon: 'notes-medical' },
+        };
+      });
+      
+      setTasks(enrichedTasks);
+      
+      const timerStates: Record<number, { elapsed: number; isRunning: boolean; startTime: number | null }> = {};
+      enrichedTasks.forEach((task: Task) => {
+        if (task.status === 'in_progress') {
+          const startTime = task.started_at ? new Date(task.started_at).getTime() : Date.now();
+          const prevElapsed = timers[task.id]?.elapsed || 0;
+          timerStates[task.id] = {
+            elapsed: prevElapsed,
+            isRunning: true,
+            startTime,
+          };
+        } else if (task.status === 'pending' || task.status === 'needs_collection') {
+          const prevElapsed = timers[task.id]?.elapsed || 0;
+          timerStates[task.id] = {
+            elapsed: prevElapsed,
+            isRunning: false,
+            startTime: null,
+          };
+        } else {
+          timerStates[task.id] = {
+            elapsed: 0,
+            isRunning: false,
+            startTime: null,
+          };
+        }
+      });
+      setTimers(timerStates);
     } catch (error) {
-      console.error('Failed to fetch tasks:', error);
+      console.error('Failed to load data:', error);
     } finally {
       setLoading(false);
     }
-  }, [selectedDate, EXPO_PUBLIC_BACKEND_BASE_URL, timers]);
-
-  // 加载治疗项目列表
-  const fetchProjects = useCallback(async () => {
-    try {
-      const response = await fetch(`${EXPO_PUBLIC_BACKEND_BASE_URL}/api/v1/projects`);
-      const result = await response.json();
-
-      if (result.success) {
-        setProjects(result.data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch projects:', error);
-    }
-  }, [EXPO_PUBLIC_BACKEND_BASE_URL]);
+  }, [selectedDate]);
 
   useEffect(() => {
-    fetchTasks();
-  }, [fetchTasks]);
+    loadData();
+  }, [loadData]);
 
-  useEffect(() => {
-    fetchProjects();
-  }, [fetchProjects]);
-
-  // 计时器效果
   useEffect(() => {
     const interval = setInterval(() => {
       setTimers((prev) => {
@@ -162,7 +143,6 @@ export default function TasksScreen() {
     return () => clearInterval(interval);
   }, []);
 
-  // 按病人分组任务
   const groupedTasks = useMemo(() => {
     const groups: PatientGroup[] = [];
     const patientMap = new Map<number, PatientGroup>();
@@ -180,7 +160,6 @@ export default function TasksScreen() {
     return Array.from(patientMap.values());
   }, [tasks]);
 
-  // 展开/折叠病人任务
   const togglePatient = (patientId: number) => {
     setExpandedPatients((prev) => {
       const newSet = new Set(prev);
@@ -193,7 +172,6 @@ export default function TasksScreen() {
     });
   };
 
-  // 日期选择
   const showDatePickerDialog = () => {
     DateTimePickerAndroid.open({
       value: dayjs(selectedDate).toDate(),
@@ -208,116 +186,74 @@ export default function TasksScreen() {
     });
   };
 
-  // 开始计时
   const startTimer = async (taskId: number) => {
     try {
-      const response = await fetch(`${EXPO_PUBLIC_BACKEND_BASE_URL}/api/v1/tasks/${taskId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'in_progress' }),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        setTimers((prev) => ({
-          ...prev,
-          [taskId]: {
-            elapsed: 0,
-            isRunning: true,
-            startTime: Date.now(),
-          },
-        }));
-        fetchTasks();
-      }
+      await LocalStorageService.updateTaskStatus(taskId, 'in_progress');
+      setTimers((prev) => ({
+        ...prev,
+        [taskId]: {
+          elapsed: 0,
+          isRunning: true,
+          startTime: Date.now(),
+        },
+      }));
+      loadData();
     } catch (error) {
       console.error('Failed to start timer:', error);
     }
   };
 
-  // 暂停计时
   const pauseTimer = async (taskId: number) => {
     try {
-      const response = await fetch(`${EXPO_PUBLIC_BACKEND_BASE_URL}/api/v1/tasks/${taskId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'pending' }),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        // 保留已用时间，不重置
-        setTimers((prev) => ({
-          ...prev,
-          [taskId]: {
-            ...prev[taskId],
-            isRunning: false,
-            startTime: null,
-          },
-        }));
-        fetchTasks();
-      }
+      await LocalStorageService.updateTaskStatus(taskId, 'pending');
+      setTimers((prev) => ({
+        ...prev,
+        [taskId]: {
+          ...prev[taskId],
+          isRunning: false,
+          startTime: null,
+        },
+      }));
+      loadData();
     } catch (error) {
       console.error('Failed to pause timer:', error);
     }
   };
 
-  // 完成计时（标记为需要取机器）
   const completeTimer = async (taskId: number) => {
     try {
-      const response = await fetch(`${EXPO_PUBLIC_BACKEND_BASE_URL}/api/v1/tasks/${taskId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'needs_collection' }),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        setTimers((prev) => ({
-          ...prev,
-          [taskId]: {
-            ...prev[taskId],
-            isRunning: false,
-            startTime: null,
-          },
-        }));
-        fetchTasks();
-      }
+      await LocalStorageService.updateTaskStatus(taskId, 'needs_collection');
+      setTimers((prev) => ({
+        ...prev,
+        [taskId]: {
+          ...prev[taskId],
+          isRunning: false,
+          startTime: null,
+        },
+      }));
+      loadData();
     } catch (error) {
       console.error('Failed to complete timer:', error);
     }
   };
 
-  // 标记机器已取
   const collectMachine = async (taskId: number) => {
     try {
-      const response = await fetch(`${EXPO_PUBLIC_BACKEND_BASE_URL}/api/v1/tasks/${taskId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'completed' }),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        setTimers((prev) => ({
-          ...prev,
-          [taskId]: {
-            elapsed: 0,
-            isRunning: false,
-            startTime: null,
-          },
-        }));
-        fetchTasks();
-      }
+      await LocalStorageService.updateTaskStatus(taskId, 'completed');
+      setTimers((prev) => ({
+        ...prev,
+        [taskId]: {
+          elapsed: 0,
+          isRunning: false,
+          startTime: null,
+        },
+      }));
+      loadData();
     } catch (error) {
       console.error('Failed to collect machine:', error);
     }
   };
 
-  // 删除任务
   const deleteTask = async (taskId: number, projectName: string) => {
     Alert.alert('确认删除', `确定要删除任务"${projectName}"吗？`, [
       { text: '取消', style: 'cancel' },
@@ -326,23 +262,13 @@ export default function TasksScreen() {
         style: 'destructive',
         onPress: async () => {
           try {
-            const response = await fetch(`${EXPO_PUBLIC_BACKEND_BASE_URL}/api/v1/tasks/${taskId}`, {
-              method: 'DELETE',
+            await LocalStorageService.deleteTask(taskId);
+            setTimers((prev) => {
+              const newTimers = { ...prev };
+              delete newTimers[taskId];
+              return newTimers;
             });
-
-            const result = await response.json();
-
-            if (result.success) {
-              // 清除计时器状态
-              setTimers((prev) => {
-                const newTimers = { ...prev };
-                delete newTimers[taskId];
-                return newTimers;
-              });
-              fetchTasks();
-            } else {
-              Alert.alert('删除失败', result.error || '请重试');
-            }
+            loadData();
           } catch (error) {
             console.error('Failed to delete task:', error);
             Alert.alert('错误', '删除失败，请重试');
@@ -352,7 +278,6 @@ export default function TasksScreen() {
     ]);
   };
 
-  // 保存任务（创建或编辑）
   const handleSaveTask = async () => {
     if (!patientName.trim() || !bedNumber.trim() || selectedProjectIds.length === 0) {
       Alert.alert('错误', '请填写病人信息并选择至少一个治疗项目');
@@ -360,60 +285,49 @@ export default function TasksScreen() {
     }
 
     try {
-      // 编辑模式：更新病人信息和任务时长
       if (editingTask) {
-        // 更新病人信息
-        await fetch(`${EXPO_PUBLIC_BACKEND_BASE_URL}/api/v1/patients/${editingTask.patient_id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: patientName.trim(),
-            bedNumber: bedNumber.trim(),
-          }),
+        await LocalStorageService.updatePatient(editingTask.patient_id, {
+          name: patientName.trim(),
+          bed_number: bedNumber.trim(),
         });
 
-        // 更新任务时长
         const project = projects.find(p => p.id === selectedProjectIds[0]);
-        await fetch(`${EXPO_PUBLIC_BACKEND_BASE_URL}/api/v1/tasks/${editingTask.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            duration: project?.default_duration || 20,
-          }),
+        await LocalStorageService.updateTask(editingTask.id, {
+          duration: project?.default_duration || 20,
         });
 
         setTaskModalVisible(false);
         resetForm();
-        fetchTasks();
+        loadData();
       } else {
-        // 创建模式：批量创建任务
-        const durations = selectedProjectIds.map(id => {
-          const project = projects.find(p => p.id === id);
-          return project?.default_duration || 20;
-        });
-
-        const response = await fetch(`${EXPO_PUBLIC_BACKEND_BASE_URL}/api/v1/tasks/batch`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            patientName: patientName.trim(),
-            bedNumber: bedNumber.trim(),
-            projectIds: selectedProjectIds,
-            taskDate: selectedDate,
-            durations,
-            notes: null,
-          }),
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-          setTaskModalVisible(false);
-          resetForm();
-          fetchTasks();
-        } else {
-          Alert.alert('错误', result.error || '保存失败');
+        let patient = patients.find(p => p.name === patientName.trim() && p.bed_number === bedNumber.trim());
+        
+        if (!patient) {
+          patient = await LocalStorageService.createPatient({
+            name: patientName.trim(),
+            bed_number: bedNumber.trim(),
+          });
         }
+
+        const tasksData = selectedProjectIds.map(projectId => {
+          const project = projects.find(p => p.id === projectId);
+          return {
+            patient_id: patient!.id,
+            project_id: projectId,
+            task_date: selectedDate,
+            duration: project?.default_duration || 20,
+            notes: null,
+            status: 'pending' as const,
+            started_at: null,
+            completed_at: null,
+            machine_collected_at: null,
+          };
+        });
+
+        await LocalStorageService.createTasksBatch(tasksData);
+        setTaskModalVisible(false);
+        resetForm();
+        loadData();
       }
     } catch (error) {
       console.error('Failed to save task:', error);
@@ -421,7 +335,6 @@ export default function TasksScreen() {
     }
   };
 
-  // 重置表单
   const resetForm = () => {
     setPatientName('');
     setBedNumber('');
@@ -429,7 +342,6 @@ export default function TasksScreen() {
     setEditingTask(null);
   };
 
-  // 打开任务编辑
   const openEditTask = (task: Task) => {
     setEditingTask(task);
     setPatientName(task.patients.name);
@@ -438,14 +350,12 @@ export default function TasksScreen() {
     setTaskModalVisible(true);
   };
 
-  // 格式化时间
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // 获取项目图标
   const getProjectIcon = (iconName: string) => {
     const iconMap: Record<string, any> = {
       brain: 'brain',
@@ -460,7 +370,6 @@ export default function TasksScreen() {
     return iconMap[iconName] || 'notes-medical';
   };
 
-  // 切换项目选择
   const toggleProject = (projectId: number) => {
     setSelectedProjectIds((prev) => {
       if (prev.includes(projectId)) {
@@ -474,7 +383,6 @@ export default function TasksScreen() {
   return (
     <Screen backgroundColor={theme.backgroundRoot} statusBarStyle={isDark ? 'light' : 'dark'}>
       <View style={styles.container}>
-        {/* 顶部日期选择和操作栏 */}
         <ThemedView style={styles.header}>
           <TouchableOpacity
             style={styles.dateButton}
@@ -487,13 +395,6 @@ export default function TasksScreen() {
 
           <View style={styles.headerButtons}>
             <TouchableOpacity
-              style={styles.iconButton}
-              onPress={() => setImportModalVisible(true)}
-            >
-              <FontAwesome6 name="file-import" size={16} color={theme.primary} />
-              <ThemedText variant="caption" style={styles.iconButtonText} color={theme.primary}>导入</ThemedText>
-            </TouchableOpacity>
-            <TouchableOpacity
               style={[styles.iconButton, styles.addButton]}
               onPress={() => setTaskModalVisible(true)}
             >
@@ -502,7 +403,6 @@ export default function TasksScreen() {
           </View>
         </ThemedView>
 
-        {/* 任务列表 */}
         <ScrollView style={styles.taskList}>
           {loading ? (
             <View style={styles.emptyContainer}>
@@ -520,7 +420,6 @@ export default function TasksScreen() {
               const isExpanded = expandedPatients.has(group.patient.id);
               return (
                 <View key={group.patient.id} style={styles.patientCard}>
-                  {/* 病人头部 */}
                   <TouchableOpacity
                     style={styles.patientHeader}
                     onPress={() => togglePatient(group.patient.id)}
@@ -547,7 +446,6 @@ export default function TasksScreen() {
                     </View>
                   </TouchableOpacity>
 
-                  {/* 任务列表 */}
                   {isExpanded && (
                     <View style={styles.tasksContainer}>
                       {group.tasks.map((task) => {
@@ -647,7 +545,6 @@ export default function TasksScreen() {
           )}
         </ScrollView>
 
-        {/* 任务创建模态框 */}
         <Modal
           visible={taskModalVisible}
           transparent

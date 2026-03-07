@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { View, ScrollView, TouchableOpacity } from 'react-native';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { useSafeRouter, useSafeSearchParams } from '@/hooks/useSafeRouter';
@@ -8,6 +8,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useTheme } from '@/hooks/useTheme';
 import { createStyles } from './styles';
+import { LocalStorageService, Task, TreatmentProject } from '@/services/localStorage';
 
 interface TreatmentTask {
   id: number;
@@ -38,30 +39,40 @@ export default function PatientHistoryScreen() {
   const [history, setHistory] = useState<Record<string, TreatmentTask[]>>({});
   const [loading, setLoading] = useState(true);
 
-  const EXPO_PUBLIC_BACKEND_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_BASE_URL || '';
-
-  // 加载病人历史记录
   const fetchHistory = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${EXPO_PUBLIC_BACKEND_BASE_URL}/api/v1/patients/${patientId}/history`);
-      const result = await response.json();
-
-      if (result.success) {
-        setHistory(result.data);
-      }
+      const allTasks = await LocalStorageService.getTasks();
+      const projects = await LocalStorageService.getProjects();
+      
+      const patientTasks = allTasks.filter(t => t.patient_id === parseInt(patientId, 10));
+      
+      const groupedByDate: Record<string, TreatmentTask[]> = {};
+      patientTasks.forEach(task => {
+        const project = projects.find(p => p.id === task.project_id);
+        const enrichedTask: TreatmentTask = {
+          ...task,
+          treatment_projects: project ? { ...project } : { id: task.project_id, name: '未知项目', description: '', default_duration: 20, icon: 'notes-medical' },
+        };
+        
+        if (!groupedByDate[task.task_date]) {
+          groupedByDate[task.task_date] = [];
+        }
+        groupedByDate[task.task_date].push(enrichedTask);
+      });
+      
+      setHistory(groupedByDate);
     } catch (error) {
       console.error('Failed to fetch patient history:', error);
     } finally {
       setLoading(false);
     }
-  }, [patientId, EXPO_PUBLIC_BACKEND_BASE_URL]);
+  }, [patientId]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetchHistory();
   }, [fetchHistory]);
 
-  // 获取项目图标
   const getProjectIcon = (iconName: string) => {
     const iconMap: Record<string, any> = {
       brain: 'brain',
@@ -76,7 +87,6 @@ export default function PatientHistoryScreen() {
     return iconMap[iconName] || 'notes-medical';
   };
 
-  // 获取状态颜色
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
@@ -85,12 +95,13 @@ export default function PatientHistoryScreen() {
         return '#F59E0B';
       case 'completed':
         return theme.success;
+      case 'needs_collection':
+        return '#F59E0B';
       default:
         return theme.textMuted;
     }
   };
 
-  // 获取状态文本
   const getStatusText = (status: string) => {
     switch (status) {
       case 'pending':
@@ -99,6 +110,8 @@ export default function PatientHistoryScreen() {
         return '进行中';
       case 'completed':
         return '已完成';
+      case 'needs_collection':
+        return '待取机';
       default:
         return status;
     }
@@ -108,7 +121,6 @@ export default function PatientHistoryScreen() {
 
   return (
     <Screen backgroundColor={theme.backgroundRoot} statusBarStyle={isDark ? 'light' : 'dark'}>
-      {/* 顶部标题栏 */}
       <ThemedView style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
@@ -122,7 +134,6 @@ export default function PatientHistoryScreen() {
           <View style={{ width: 40 }} />
         </ThemedView>
 
-        {/* 历史记录列表 */}
         <ScrollView style={styles.historyList}>
           {loading ? (
             <View style={styles.emptyContainer}>

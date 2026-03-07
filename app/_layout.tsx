@@ -6,13 +6,17 @@ import { LogBox, Platform } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ColorSchemeProvider } from '@/hooks/useColorScheme';
+import { LocalStorageService } from '@/services/localStorage';
 
 LogBox.ignoreLogs([
   "TurboModuleRegistry.getEnforcing(...): 'RNMapsAirModule' could not be found",
-  // 添加其它想暂时忽略的错误或警告信息
 ]);
 
 export default function RootLayout() {
+  useEffect(() => {
+    LocalStorageService.initialize();
+  }, []);
+
   return (
     <AuthProvider>
       <ColorSchemeProvider>

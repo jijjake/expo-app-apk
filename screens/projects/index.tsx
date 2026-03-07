@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { View, TouchableOpacity, Alert, Modal, TextInput, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { FontAwesome6 } from '@expo/vector-icons';
 
@@ -7,14 +7,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useTheme } from '@/hooks/useTheme';
 import { createStyles } from './styles';
-
-interface TreatmentProject {
-  id: number;
-  name: string;
-  description: string;
-  default_duration: number;
-  icon: string;
-}
+import { LocalStorageService, TreatmentProject } from '@/services/localStorage';
 
 export default function ProjectsScreen() {
   const { theme, isDark } = useTheme();
@@ -25,15 +18,11 @@ export default function ProjectsScreen() {
   const [projectModalVisible, setProjectModalVisible] = useState(false);
   const [editingProject, setEditingProject] = useState<TreatmentProject | null>(null);
 
-  // 项目表单状态
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [defaultDuration, setDefaultDuration] = useState('20');
   const [selectedIcon, setSelectedIcon] = useState('brain');
 
-  const EXPO_PUBLIC_BACKEND_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_BASE_URL || '';
-
-  // 图标选项
   const iconOptions = [
     { id: 'brain', name: '经颅磁', icon: 'brain' },
     { id: 'heart', name: '生物反馈', icon: 'heart-pulse' },
@@ -45,28 +34,22 @@ export default function ProjectsScreen() {
     { id: 'physical', name: '物理治疗', icon: 'person-walking' },
   ];
 
-  // 加载治疗项目列表
   const fetchProjects = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${EXPO_PUBLIC_BACKEND_BASE_URL}/api/v1/projects`);
-      const result = await response.json();
-
-      if (result.success) {
-        setProjects(result.data);
-      }
+      const projectsData = await LocalStorageService.getProjects();
+      setProjects(projectsData);
     } catch (error) {
       console.error('Failed to fetch projects:', error);
     } finally {
       setLoading(false);
     }
-  }, [EXPO_PUBLIC_BACKEND_BASE_URL]);
+  }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetchProjects();
   }, [fetchProjects]);
 
-  // 重置表单
   const resetForm = () => {
     setName('');
     setDescription('');
@@ -75,13 +58,11 @@ export default function ProjectsScreen() {
     setEditingProject(null);
   };
 
-  // 打开新增项目
   const openAddProject = () => {
     resetForm();
     setProjectModalVisible(true);
   };
 
-  // 打开编辑项目
   const openEditProject = (project: TreatmentProject) => {
     setEditingProject(project);
     setName(project.name);
@@ -91,7 +72,6 @@ export default function ProjectsScreen() {
     setProjectModalVisible(true);
   };
 
-  // 保存项目（新增或编辑）
   const handleSaveProject = async () => {
     if (!name.trim() || !defaultDuration.trim()) {
       Alert.alert('错误', '请填写所有必填字段');
@@ -99,61 +79,43 @@ export default function ProjectsScreen() {
     }
 
     try {
-      const url = editingProject
-        ? `${EXPO_PUBLIC_BACKEND_BASE_URL}/api/v1/projects/${editingProject.id}`
-        : `${EXPO_PUBLIC_BACKEND_BASE_URL}/api/v1/projects`;
-
-      const method = editingProject ? 'PATCH' : 'POST';
-
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      if (editingProject) {
+        await LocalStorageService.updateProject(editingProject.id, {
           name: name.trim(),
           description: description.trim(),
-          defaultDuration: parseInt(defaultDuration.trim(), 10),
+          default_duration: parseInt(defaultDuration.trim(), 10),
           icon: selectedIcon,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        setProjectModalVisible(false);
-        resetForm();
-        fetchProjects();
+        });
       } else {
-        Alert.alert('错误', result.error || '保存失败');
+        await LocalStorageService.createProject({
+          name: name.trim(),
+          description: description.trim(),
+          default_duration: parseInt(defaultDuration.trim(), 10),
+          icon: selectedIcon,
+        });
       }
+      setProjectModalVisible(false);
+      resetForm();
+      fetchProjects();
     } catch (error) {
       console.error('Failed to save project:', error);
       Alert.alert('错误', '保存失败，请重试');
     }
   };
 
-  // 删除项目
   const deleteProject = async (projectId: number, projectName: string) => {
-    Alert.alert('确认删除', `确定要删除项目"${projectName}"吗？\n\n注意：如果该项目下有任务，将无法删除。`, [
+    Alert.alert('确认删除', `确定要删除项目"${projectName}"吗？`, [
       { text: '取消', style: 'cancel' },
       {
         text: '删除',
         style: 'destructive',
         onPress: async () => {
           try {
-            const response = await fetch(`${EXPO_PUBLIC_BACKEND_BASE_URL}/api/v1/projects/${projectId}`, {
-              method: 'DELETE',
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
+            const success = await LocalStorageService.deleteProject(projectId);
+            if (success) {
               fetchProjects();
             } else {
-              if (result.error === 'Cannot delete project with existing tasks') {
-                Alert.alert('无法删除', '该项目下还有任务，请先删除相关任务后再删除项目。');
-              } else {
-                Alert.alert('删除失败', result.error || '请重试');
-              }
+              Alert.alert('删除失败', '请重试');
             }
           } catch (error) {
             console.error('Failed to delete project:', error);
@@ -166,7 +128,6 @@ export default function ProjectsScreen() {
 
   return (
     <Screen backgroundColor={theme.backgroundRoot} statusBarStyle={isDark ? 'light' : 'dark'}>
-      {/* 顶部标题栏 */}
       <ThemedView style={styles.header}>
         <ThemedText variant="h3" color={theme.textPrimary}>
           治疗项目管理
@@ -179,7 +140,6 @@ export default function ProjectsScreen() {
         </TouchableOpacity>
       </ThemedView>
 
-        {/* 项目列表 */}
         <View style={styles.projectList}>
           {loading ? (
             <View style={styles.emptyContainer}>
@@ -234,7 +194,6 @@ export default function ProjectsScreen() {
           )}
         </View>
 
-        {/* 项目创建/编辑模态框 */}
         <Modal
           visible={projectModalVisible}
           transparent
