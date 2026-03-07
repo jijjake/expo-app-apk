@@ -84,6 +84,7 @@ jobs:
           echo "=== Building Android ==="
           cd android
           ls -la
+          chmod +x gradlew
           ./gradlew --version
           ./gradlew assembleDebug --info || {
             echo "=== gradle build failed ==="
