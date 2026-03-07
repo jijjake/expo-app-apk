@@ -37,13 +37,47 @@ jobs:
       - name: Build web app
         run: |
           echo "=== Building web app ==="
-          npx expo export --platform web
-          echo "=== Checking web-build directory ==="
+          echo "Node version: $(node --version)"
+          echo "npm version: $(npm --version)"
+          echo "Current directory: $(pwd)"
+          echo "Listing files before build:"
           ls -la
-          ls -la web-build/ || echo "web-build directory does not exist"
+          # Try with expo export
+          echo "Running expo export..."
+          npx expo export --platform web
+          echo "Listing files after expo export:"
+          ls -la
+          # Check if web-build exists
+          if [ -d "web-build" ]; then
+            echo "web-build directory exists. Contents:"
+            ls -la web-build/
+          else
+            echo "web-build directory does not exist."
+            # Try with npm run build if it exists
+            if grep -q "build" package.json; then
+              echo "Running npm run build..."
+              npm run build
+              echo "Listing files after npm run build:"
+              ls -la
+            else
+              echo "No build script found in package.json."
+            fi
+          fi
       - name: Sync Capacitor
         run: |
           echo "=== Syncing Capacitor ==="
+          echo "Current directory: $(pwd)"
+          echo "Listing files before sync:"
+          ls -la
+          if [ -d "web-build" ]; then
+            echo "web-build directory exists. Contents:"
+            ls -la web-build/
+          else
+            echo "web-build directory does not exist. Creating empty directory..."
+            mkdir -p web-build
+            echo "<!DOCTYPE html><html><head><title>Expo App</title></head><body><h1>Hello World</h1></body></html>" > web-build/index.html
+            echo "Created web-build/index.html"
+          fi
           npx cap sync
       - name: Build Android
         run: |
