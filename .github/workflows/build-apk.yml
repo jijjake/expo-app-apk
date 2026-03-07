@@ -18,19 +18,42 @@ jobs:
           java-version: '21'
       - name: Install dependencies
         run: |
+          echo "=== Installing dependencies ==="
           npm --version
           node --version
-          npm install --verbose
+          ls -la
+          npm install --verbose || {
+            echo "=== npm install failed ==="
+            exit 1
+          }
       - name: Install Capacitor
-        run: npm install @capacitor/core @capacitor/cli @capacitor/android --verbose
+        run: |
+          echo "=== Installing Capacitor ==="
+          npm install @capacitor/core @capacitor/cli @capacitor/android --verbose || {
+            echo "=== npm install Capacitor failed ==="
+            exit 1
+          }
       - name: Sync Capacitor
-        run: npx cap sync --verbose
+        run: |
+          echo "=== Syncing Capacitor ==="
+          npx cap sync --verbose || {
+            echo "=== cap sync failed ==="
+            exit 1
+          }
       - name: Build Android
         run: |
+          echo "=== Building Android ==="
           cd android
           ls -la
           ./gradlew --version
-          ./gradlew assembleDebug --info
+          ./gradlew assembleDebug --info || {
+            echo "=== gradle build failed ==="
+            exit 1
+          }
+      - name: Check APK existence
+        run: |
+          echo "=== Checking APK existence ==="
+          ls -la android/app/build/outputs/apk/debug/
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
