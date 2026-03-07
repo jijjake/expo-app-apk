@@ -37,17 +37,14 @@ jobs:
       - name: Build web app
         run: |
           echo "=== Building web app ==="
-          npx expo export --platform web || {
-            echo "=== web build failed ==="
-            exit 1
-          }
+          npx expo export --platform web
+          echo "=== Checking web-build directory ==="
+          ls -la
+          ls -la web-build/ || echo "web-build directory does not exist"
       - name: Sync Capacitor
         run: |
           echo "=== Syncing Capacitor ==="
-          npx cap sync || {
-            echo "=== cap sync failed ==="
-            exit 1
-          }
+          npx cap sync
       - name: Build Android
         run: |
           echo "=== Building Android ==="
