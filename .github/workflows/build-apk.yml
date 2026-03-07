@@ -17,11 +17,14 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
       - name: Install dependencies
-        run: npm install
+        run: |
+          npm --version
+          node --version
+          npm install --verbose
       - name: Install Capacitor
-        run: npm install @capacitor/core @capacitor/cli @capacitor/android
+        run: npm install @capacitor/core @capacitor/cli @capacitor/android --verbose
       - name: Sync Capacitor
-        run: npx cap sync
+        run: npx cap sync --verbose
       - name: Build Android
         run: |
           cd android
