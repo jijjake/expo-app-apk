@@ -17,6 +17,10 @@ export const createStyles = (theme: typeof Colors.light) =>
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: theme.borderLight,
     },
+    headerButtons: {
+      flexDirection: 'row',
+      gap: Spacing.sm,
+    },
     iconButton: {
       width: 36,
       height: 36,
@@ -122,26 +126,109 @@ export const createStyles = (theme: typeof Colors.light) =>
     },
     modalOverlay: {
       flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.6)',
-      justifyContent: 'flex-end',
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'center',
+      alignItems: 'center',
     },
     modalContent: {
       backgroundColor: theme.backgroundDefault,
-      borderTopLeftRadius: BorderRadius.xl,
-      borderTopRightRadius: BorderRadius.xl,
+      borderRadius: BorderRadius.xl,
+      width: '90%',
+      maxWidth: 400,
     },
     modalBody: {
       paddingHorizontal: Spacing.lg,
       paddingVertical: Spacing.lg,
-      gap: Spacing.lg,
+      gap: Spacing.md,
     },
     modalHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      paddingBottom: Spacing.md,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: theme.borderLight,
+      paddingBottom: Spacing.sm,
+    },
+    rowInput: {
+      flexDirection: 'row',
+      gap: Spacing.md,
+    },
+    halfInput: {
+      flex: 1,
+      gap: 4,
+    },
+    inputSmall: {
+      backgroundColor: theme.backgroundRoot,
+      borderRadius: BorderRadius.md,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm,
+      borderWidth: 1,
+      borderColor: theme.border,
+      minHeight: 40,
+      fontSize: 15,
+      color: theme.textPrimary,
+    },
+    projectSection: {
+      gap: Spacing.sm,
+    },
+    sectionLabel: {
+      fontWeight: '500',
+    },
+    projectGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: Spacing.xs,
+    },
+    projectChip: {
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.xs,
+      borderRadius: BorderRadius.full,
+      backgroundColor: theme.backgroundRoot,
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    projectChipSelected: {
+      backgroundColor: theme.primary,
+      borderColor: theme.primary,
+    },
+    selectedProjects: {
+      gap: Spacing.sm,
+      paddingTop: Spacing.xs,
+    },
+    projectEditRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.sm,
+    },
+    projectEditName: {
+      width: 80,
+      fontSize: 13,
+    },
+    projectEditInputs: {
+      flex: 1,
+      flexDirection: 'row',
+      gap: Spacing.sm,
+    },
+    timeInput: {
+      width: 60,
+      backgroundColor: theme.backgroundRoot,
+      borderRadius: BorderRadius.sm,
+      paddingHorizontal: Spacing.sm,
+      paddingVertical: Spacing.xs,
+      borderWidth: 1,
+      borderColor: theme.border,
+      fontSize: 13,
+      color: theme.textPrimary,
+      textAlign: 'center',
+    },
+    notesInput: {
+      flex: 1,
+      backgroundColor: theme.backgroundRoot,
+      borderRadius: BorderRadius.sm,
+      paddingHorizontal: Spacing.sm,
+      paddingVertical: Spacing.xs,
+      borderWidth: 1,
+      borderColor: theme.border,
+      fontSize: 13,
+      color: theme.textPrimary,
     },
     formGroup: {
       gap: Spacing.xs,
@@ -165,30 +252,77 @@ export const createStyles = (theme: typeof Colors.light) =>
     modalFooter: {
       flexDirection: 'row',
       gap: Spacing.md,
-      paddingTop: Spacing.md,
+      paddingTop: Spacing.sm,
     },
     modalButton: {
       flex: 1,
-      paddingVertical: Spacing.md,
-      borderRadius: BorderRadius.lg,
+      paddingVertical: Spacing.sm,
+      borderRadius: BorderRadius.md,
       alignItems: 'center',
-      minHeight: 48,
+      minHeight: 40,
     },
     cancelButton: {
       backgroundColor: theme.backgroundRoot,
       borderWidth: 1,
       borderColor: theme.border,
     },
-    cancelButtonText: {
-      fontSize: 16,
-      fontWeight: '600',
-      color: theme.textSecondary,
-    },
     confirmButton: {
       backgroundColor: theme.primary,
     },
-    confirmButtonText: {
+    removeProjectButton: {
+      width: 28,
+      height: 28,
+      borderRadius: BorderRadius.sm,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    },
+    // 更多按钮
+    moreButton: {
+      width: 36,
+      height: 36,
+      borderRadius: BorderRadius.md,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    // 操作菜单样式
+    actionMenuOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.4)',
+      justifyContent: 'flex-end',
+    },
+    actionMenuContent: {
+      paddingHorizontal: Spacing.md,
+      paddingBottom: Spacing.xl,
+    },
+    actionMenuBody: {
+      borderRadius: BorderRadius.xl,
+      overflow: 'hidden',
+    },
+    actionMenuHeader: {
+      paddingHorizontal: Spacing.lg,
+      paddingVertical: Spacing.md,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.borderLight,
+      alignItems: 'center',
+    },
+    actionMenuItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: Spacing.lg,
+      paddingVertical: Spacing.md,
+      gap: Spacing.md,
+    },
+    actionMenuItemDanger: {
+      // 危险操作样式
+    },
+    actionMenuText: {
       fontSize: 16,
-      fontWeight: '600',
+      fontWeight: '500',
+    },
+    actionMenuDivider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: theme.borderLight,
+      marginHorizontal: Spacing.lg,
     },
   });

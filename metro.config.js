@@ -10,6 +10,7 @@ const existingBlockList = [].concat(config.resolver.blockList || []);
 config.resolver.blockList = [
   ...existingBlockList,
   /.*\/\.expo\/.*/, // Expo 的缓存和构建产物目录
+  /.*\/projects\/node_modules\/.*/, // 父目录的 node_modules
 
   // 1. 原生代码 (Java/C++/Objective-C)
   /.*\/react-native\/ReactAndroid\/.*/,
@@ -28,7 +29,7 @@ config.resolver.blockList = [
   /.*\.git\/.*/, // 排除 Git 目录
 
   // 5. pnpm 临时目录（避免 ENOENT 错误）
-  /.*node_modules\/\.pnpm\/.*_tmp_\d.*/,
+  /.*node_modules\/\.pnpm\/.*_tmp_\d*/,
 ];
 
 const BACKEND_TARGET = 'http://localhost:9091';

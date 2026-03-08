@@ -261,7 +261,7 @@ export default function ProjectsScreen() {
         <Modal
           visible={projectModalVisible}
           transparent
-          animationType="slide"
+          animationType="fade"
           onRequestClose={() => setProjectModalVisible(false)}
         >
           <KeyboardAvoidingView
@@ -295,21 +295,6 @@ export default function ProjectsScreen() {
 
                   <View style={styles.formGroup}>
                     <ThemedText variant="caption" color={theme.textSecondary} style={styles.label}>
-                      项目描述
-                    </ThemedText>
-                    <TextInput
-                      style={[styles.input, styles.textArea]}
-                      value={description}
-                      onChangeText={setDescription}
-                      placeholder="请输入项目描述"
-                      placeholderTextColor={theme.textMuted}
-                      multiline
-                      numberOfLines={3}
-                    />
-                  </View>
-
-                  <View style={styles.formGroup}>
-                    <ThemedText variant="caption" color={theme.textSecondary} style={styles.label}>
                       默认时长 (分钟) *
                     </ThemedText>
                     <TextInput
@@ -319,6 +304,21 @@ export default function ProjectsScreen() {
                       placeholder="请输入时长"
                       placeholderTextColor={theme.textMuted}
                       keyboardType="number-pad"
+                    />
+                  </View>
+
+                  <View style={styles.formGroup}>
+                    <ThemedText variant="caption" color={theme.textSecondary} style={styles.label}>
+                      项目描述
+                    </ThemedText>
+                    <TextInput
+                      style={[styles.input, styles.textArea]}
+                      value={description}
+                      onChangeText={setDescription}
+                      placeholder="请输入项目描述"
+                      placeholderTextColor={theme.textMuted}
+                      multiline
+                      numberOfLines={2}
                     />
                   </View>
 
@@ -338,7 +338,7 @@ export default function ProjectsScreen() {
                         >
                           <FontAwesome6
                             name={option.icon as any}
-                            size={16}
+                            size={14}
                             color={
                               selectedIcon === option.id
                                 ? theme.buttonPrimaryText
@@ -367,17 +367,13 @@ export default function ProjectsScreen() {
                     style={[styles.modalButton, styles.cancelButton]}
                     onPress={() => setProjectModalVisible(false)}
                   >
-                    <ThemedText style={styles.cancelButtonText} color={theme.textSecondary}>
-                      取消
-                    </ThemedText>
+                    <ThemedText color={theme.textSecondary}>取消</ThemedText>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.modalButton, styles.confirmButton]}
                     onPress={handleSaveProject}
                   >
-                    <ThemedText style={styles.confirmButtonText} color={theme.buttonPrimaryText}>
-                      保存
-                    </ThemedText>
+                    <ThemedText color={theme.buttonPrimaryText}>保存</ThemedText>
                   </TouchableOpacity>
                 </View>
               </ThemedView>

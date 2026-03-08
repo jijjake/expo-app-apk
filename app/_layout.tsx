@@ -28,6 +28,7 @@ function RootLayoutNav() {
         }
       }}>
         <Stack.Screen name="(tabs)" options={{ title: "" }} />
+        <Stack.Screen name="patient-detail" options={{ title: "病人详情" }} />
         <Stack.Screen name="patient-history" options={{ title: "病人历史" }} />
       </Stack>
       <Toast />
